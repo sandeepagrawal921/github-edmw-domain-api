@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+    <PackageReference Include="Common.Framework.Services" Version="1.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Edmw.DomainValue.Business\Edmw.DomainValue.Business.csproj" />
+    <ProjectReference Include="..\Edmw.DomainValue.Data.Dto\Edmw.DomainValue.Data.Dto.csproj" />
+    <ProjectReference Include="..\Edmw.DomainValue.Data\Edmw.DomainValue.Data.csproj" />
+  </ItemGroup>
+
+</Project>

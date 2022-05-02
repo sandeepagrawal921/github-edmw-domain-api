@@ -1,0 +1,122 @@
+stages:
+    - build
+    - test
+    - quality_test
+    - deploy
+    # - Automation_Test
+    - upload_artifacts
+    # - trigger_msi
+
+    
+variables:
+    SONAR_SERVER_URL: https://sonar.ihsmarkit.com
+    MSbuildsINGLELOADCONTEXT: '1'
+    EDMW_AWS_S3_BUCKET: edmw-artifacts
+    MSIBUILDBRANCHNAME: develop
+    CERTIFICATEPATH: ''
+
+build job:
+    stage: build
+    tags:
+        - edmwapi
+    before_script:
+        - "dotnet restore"
+    script:
+        - "dotnet build --configuration Release"
+        
+Unit test job:
+    stage: test
+    tags:
+        - edmwapi
+
+    script:
+        - "dotnet test"
+
+sonar_analysis:
+    stage: quality_test
+    tags:
+        - edmwapi
+    variables:
+        SONAR_KEY: "edmw-domainvalue-api"
+        SONAR_TITLE: "edmw-domainvalue-api"  
+        #SONARQUBE_BRANCH_NAME: $CI_COMMIT_REF_NAME
+    cache:
+        paths:
+        - sonarscanner/cache/
+    script:
+        - dotnet restore 
+        - dotnet C:/GitLab-Runner/sonar-scanner/SonarScanner.MSBuild.dll begin
+            /k:${SONAR_KEY}
+            /n:${SONAR_TITLE} 
+            /v:$BUILD_VERSION 
+            /d:sonar.host.url=${SONAR_SERVER_URL} 
+            /d:sonar.language="cs" 
+            /d:sonar.cs.opencover.reportsPaths="./tests/CoverageResults/coverage.opencover.xml" 
+            /d:sonar.coverage.exclusions="**/*Program.cs,**/*Startup.cs,**/*Upgrade.cs,**/*ConnectionString.cs" 
+            /d:sonar.login="a539f3861e1c62b06d51588feeafe243173f55e9"
+            /d:sonar.buildbreaker.skip=false
+            /d:sonar.buildbreaker.queryMaxAttempts=45 
+            /d:sonar.buildbreaker.queryInterval=20000 
+        - dotnet build /nodereuse:false  --no-restore
+        - dotnet test ./tests/Edmw.DomainValue.UnitTests/Edmw.DomainValue.UnitTests.csproj --no-build --no-restore 
+            /p:CollectCoverage=true 
+            /p:CoverletOutputFormat="opencover"
+            /p:CoverletOutput=../CoverageResults/ 
+            /p:MergeWith="../CoverageResults/coverage.json" 
+            /p:Exclude="[xunit*]*%2c[database*]*%2c[*]*Program"
+        - dotnet test ./tests/Edmw.DomainValue.UnitTests/Edmw.DomainValue.UnitTests.csproj --no-build --no-restore 
+            /p:CollectCoverage=true 
+            /p:CoverletOutputFormat="opencover"
+            /p:CoverletOutput=../CoverageResults/
+            /p:MergeWith="../CoverageResults/coverage.json" 
+            /p:Exclude="[xunit*]*%2c[Common*]*%2c[edmw-helper*]*%2c[Common.Auth*]*%2c[*]*Program*"
+        - dotnet  C:/GitLab-Runner/sonar-scanner/SonarScanner.MSBuild.dll end /d:sonar.login="a539f3861e1c62b06d51588feeafe243173f55e9"
+
+        
+### WhiteSource analysis
+
+whitesource_analysis:
+    stage: quality_test
+    tags:
+        - edmwapi
+    script:
+    - echo "Run WhiteSource analysis..."
+    - java -jar ../../../../../whitesource-edmw/wss-unified-agent.jar  -c ./builds/wss-unified-agent.config  -d ".\src"
+
+        
+deploy job:
+    stage: deploy 
+    tags:
+        - edmwapi
+    script:
+        - $CERTIFICATEPATH  = $env:SystemDrive + "\EDMWAPI\IdentityApiService\EDMWIdentitySvcCert.pfx"
+        - ./builds/WebsiteDeploy.ps1 src\domainvalue-service\Edmw.DomainValue.Api\Edmw.DomainValue.Api.csproj Yes $CERTIFICATEPATH 1234
+               
+# Automation Test Job:
+     # stage: Automation_Test
+     # tags:
+         # - edmwapi
+     # script:
+         # - dotnet test ./edmw-api-automation/Edmw.Automation.Tests/Edmw.Automation.Tests.csproj
+
+upload_artifacts job:
+    stage: upload_artifacts
+    tags:
+        - edmwapi
+    before_script:
+        - "dotnet restore"
+    script:       
+        # - $PUBLISHPATH = (Get-Location).Path + "\funds-service\publish"
+        # - $PROJECTPATH = (Get-Location).Path + "src\domainvalue-service\Edmw.DomainValue.Api\Edmw.DomainValue.Api.csproj"
+        # - echo $PUBLISHPATH
+        # - echo $PROJECTPATH 
+        - "dotnet publish --configuration Release"
+        - ./builds/Write-Artifacts.ps1 $CI_COMMIT_REF_NAME $EDMW_AWS_S3_BUCKET .\src\domainvalue-service\Edmw.DomainValue.Api\bin\Release\netcoreapp3.1\publish
+        
+# trigger_msi:
+    # stage: trigger_msi
+    # tags:
+        # - edmwapi
+    # script:
+         # - ./builds/TriggerMsiUsingCurl.bat $CI_COMMIT_REF_NAME $MSIBUILDBRANCHNAME
+
