@@ -2,4 +2,16 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+/src/domainvalue-service/Edmw.DomainValue.Api/bin/Debug/netcoreapp3.1
 /src/domainvalue-service/Edmw.DomainValue.Api/obj
+/src/domainvalue-service/Edmw.DomainValue.Business/bin/Debug/netcoreapp3.1
+/src/domainvalue-service/Edmw.DomainValue.Business/obj
+/src/domainvalue-service/Edmw.DomainValue.Data/bin/Debug/netcoreapp3.1
+/src/domainvalue-service/Edmw.DomainValue.Data/obj
+/src/domainvalue-service/Edmw.DomainValue.Data.Dto/bin/Debug/netcoreapp3.1
+/src/domainvalue-service/Edmw.DomainValue.Data.Dto/obj
+/src/domainvalue-service/Edmw.DomainValue.Data.Entity/bin/Debug/netcoreapp3.1
+/src/domainvalue-service/Edmw.DomainValue.Data.Entity/obj
+/tests/Edmw.DomainValue.UnitTests/bin/Debug/netcoreapp3.1
+/tests/Edmw.DomainValue.UnitTests/obj
+
